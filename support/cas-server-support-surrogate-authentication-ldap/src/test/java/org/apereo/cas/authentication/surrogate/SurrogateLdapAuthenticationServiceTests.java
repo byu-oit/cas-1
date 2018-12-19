@@ -32,6 +32,7 @@ import org.apereo.cas.web.flow.config.CasCoreWebflowConfiguration;
 import org.apereo.cas.web.flow.config.CasWebflowContextConfiguration;
 
 import com.unboundid.ldap.sdk.LDAPConnection;
+import lombok.Cleanup;
 import lombok.Getter;
 import lombok.SneakyThrows;
 import lombok.val;
@@ -52,6 +53,10 @@ import org.springframework.test.context.TestPropertySource;
  */
 @Category(LdapCategory.class)
 @SpringBootTest(classes = {
+    SurrogateLdapAuthenticationConfiguration.class,
+    SurrogateAuthenticationConfiguration.class,
+    SurrogateAuthenticationAuditConfiguration.class,
+    SurrogateAuthenticationMetadataConfiguration.class,
     RefreshAutoConfiguration.class,
     CasCoreAuthenticationPrincipalConfiguration.class,
     CasCoreAuthenticationPolicyConfiguration.class,
@@ -75,21 +80,17 @@ import org.springframework.test.context.TestPropertySource;
     CasCoreLogoutConfiguration.class,
     CasCookieConfiguration.class,
     CasThemesConfiguration.class,
-    CasCoreAuthenticationServiceSelectionStrategyConfiguration.class,
-    SurrogateAuthenticationConfiguration.class,
-    SurrogateAuthenticationAuditConfiguration.class,
-    SurrogateAuthenticationMetadataConfiguration.class,
-    SurrogateLdapAuthenticationConfiguration.class
+    CasCoreAuthenticationServiceSelectionStrategyConfiguration.class
 })
 @ConditionalIgnore(condition = RunningContinuousIntegrationCondition.class)
 @TestPropertySource(properties = {
     "cas.authn.surrogate.ldap.ldapUrl=ldap://localhost:10389",
     "cas.authn.surrogate.ldap.useSsl=false",
-    "cas.authn.surrogate.ldap.baseDn=ou=people,dc=example,dc=org",
+    "cas.authn.surrogate.ldap.baseDn=ou=surrogates,dc=example,dc=org",
     "cas.authn.surrogate.ldap.bindDn=cn=Directory Manager",
     "cas.authn.surrogate.ldap.bindCredential=password",
     "cas.authn.surrogate.ldap.searchFilter=cn={user}",
-    "cas.authn.surrogate.ldap.surrogateSearchFilter=employeeType={user}",
+    "cas.authn.surrogate.ldap.surrogateSearchFilter=employeeType={surrogate}",
     "cas.authn.surrogate.ldap.memberAttributeName=mail",
     "cas.authn.surrogate.ldap.memberAttributeValueRegex=\\\\w+@example.org"
     })
@@ -105,13 +106,18 @@ public class SurrogateLdapAuthenticationServiceTests extends BaseSurrogateAuthen
     @BeforeClass
     @SneakyThrows
     public static void bootstrap() {
+        @Cleanup
         val localhost = new LDAPConnection("localhost", LDAP_PORT,
             "cn=Directory Manager", "password");
         localhost.connect("localhost", LDAP_PORT);
         localhost.bind("cn=Directory Manager", "password");
         LdapIntegrationTestsOperations.populateEntries(
             localhost,
+            new ClassPathResource("ldif/ldap-surrogates-ou.ldif").getInputStream(),
+            "dc=example,dc=org");
+        LdapIntegrationTestsOperations.populateEntries(
+            localhost,
             new ClassPathResource("ldif/ldap-surrogate.ldif").getInputStream(),
-            "ou=people,dc=example,dc=org");
+            "ou=surrogates,dc=example,dc=org");
     }
 }

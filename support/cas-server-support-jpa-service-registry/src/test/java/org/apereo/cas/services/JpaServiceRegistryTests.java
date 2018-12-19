@@ -35,6 +35,7 @@ import java.util.Collection;
 })
 @DirtiesContext
 public class JpaServiceRegistryTests extends AbstractServiceRegistryTests {
+
     @Autowired
     @Qualifier("jpaServiceRegistry")
     private ServiceRegistry serviceRegistry;

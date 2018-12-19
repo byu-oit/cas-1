@@ -2,7 +2,7 @@ package org.apereo.cas.web.flow.login;
 
 import org.apereo.cas.authentication.AuthenticationEventExecutionPlan;
 import org.apereo.cas.authentication.AuthenticationServiceSelectionPlan;
-import org.apereo.cas.authentication.UsernamePasswordCredential;
+import org.apereo.cas.authentication.credential.UsernamePasswordCredential;
 import org.apereo.cas.configuration.CasConfigurationProperties;
 import org.apereo.cas.services.RegisteredServiceAccessStrategyUtils;
 import org.apereo.cas.services.ServicesManager;
@@ -83,7 +83,7 @@ public class InitialFlowSetupAction extends AbstractAction {
             throw new NoSuchFlowExecutionException(context.getFlowExecutionContext().getKey(),
                 new UnauthorizedServiceException("screen.service.required.message", "Service is required"));
         }
-        WebUtils.putService(context, service);
+        WebUtils.putServiceIntoFlowScope(context, service);
     }
 
     private void configureWebflowContext(final RequestContext context) {
@@ -99,14 +99,16 @@ public class InitialFlowSetupAction extends AbstractAction {
             StringUtils.isNotBlank(casProperties.getAuthn().getAccept().getUsers())
                 || StringUtils.isNotBlank(casProperties.getAuthn().getReject().getUsers()));
 
-        val availableHandlers = authenticationEventExecutionPlan.getAuthenticationHandlers()
-            .stream()
-            .filter(h -> h.supports(UsernamePasswordCredential.class))
-            .map(h -> StringUtils.capitalize(h.getName().trim()))
-            .distinct()
-            .sorted()
-            .collect(Collectors.toList());
-        WebUtils.putAvailableAuthenticationHandleNames(context, availableHandlers);
+        if (casProperties.getAuthn().getPolicy().isSourceSelectionEnabled()) {
+            val availableHandlers = authenticationEventExecutionPlan.getAuthenticationHandlers()
+                .stream()
+                .filter(h -> h.supports(UsernamePasswordCredential.class))
+                .map(h -> StringUtils.capitalize(h.getName().trim()))
+                .distinct()
+                .sorted()
+                .collect(Collectors.toList());
+            WebUtils.putAvailableAuthenticationHandleNames(context, availableHandlers);
+        }
     }
 
     private void configureCookieGenerators(final RequestContext context) {
@@ -117,14 +119,14 @@ public class InitialFlowSetupAction extends AbstractAction {
             LOGGER.info("Setting path for cookies for warn cookie generator to: [{}] ", cookiePath);
             this.warnCookieGenerator.setCookiePath(cookiePath);
         } else {
-            LOGGER.debug("Warning cookie path is set to [{}] and path [{}]", this.warnCookieGenerator.getCookieDomain(),
+            LOGGER.trace("Warning cookie path is set to [{}] and path [{}]", this.warnCookieGenerator.getCookieDomain(),
                 this.warnCookieGenerator.getCookiePath());
         }
         if (StringUtils.isBlank(this.ticketGrantingTicketCookieGenerator.getCookiePath())) {
             LOGGER.debug("Setting path for cookies for TGC cookie generator to: [{}] ", cookiePath);
             this.ticketGrantingTicketCookieGenerator.setCookiePath(cookiePath);
         } else {
-            LOGGER.debug("TGC cookie path is set to [{}] and path [{}]", this.ticketGrantingTicketCookieGenerator.getCookieDomain(),
+            LOGGER.trace("TGC cookie path is set to [{}] and path [{}]", this.ticketGrantingTicketCookieGenerator.getCookieDomain(),
                 this.ticketGrantingTicketCookieGenerator.getCookiePath());
         }
     }

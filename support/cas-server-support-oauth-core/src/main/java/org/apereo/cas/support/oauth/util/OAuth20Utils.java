@@ -125,7 +125,7 @@ public class OAuth20Utils {
             .filter(a -> StringUtils.isNotBlank(context.getParameter(a)))
             .map(m -> {
                 val values = context.getParameterValues(m);
-                val valuesSet = new LinkedHashSet<>();
+                val valuesSet = new LinkedHashSet<Object>();
                 if (values != null && values.length > 0) {
                     Arrays.stream(values).forEach(v -> valuesSet.addAll(Arrays.stream(v.split(" ")).collect(Collectors.toSet())));
                 }
@@ -338,7 +338,7 @@ public class OAuth20Utils {
      * @param redirectUri       the callback url
      * @return whether the callback url is valid
      */
-    public static boolean checkCallbackValid(@NonNull final RegisteredService registeredService, final String redirectUri) {
+    public static boolean checkCallbackValid(final @NonNull RegisteredService registeredService, final String redirectUri) {
         val registeredServiceId = registeredService.getServiceId();
         LOGGER.debug("Found: [{}] vs redirectUri: [{}]", registeredService, redirectUri);
         if (!redirectUri.matches(registeredServiceId)) {

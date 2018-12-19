@@ -68,7 +68,11 @@ import static org.junit.Assert.*;
  * @since 3.0.0
  */
 @SpringBootTest(classes = {
+    JpaTicketRegistryTicketCatalogConfiguration.class,
+    JpaTicketRegistryConfiguration.class,
     JpaLockingStrategyTests.JpaTestConfiguration.class,
+    JpaTicketRegistryTicketCatalogConfiguration.class,
+    JpaTicketRegistryConfiguration.class,
     RefreshAutoConfiguration.class,
     AopAutoConfiguration.class,
     CasCoreTicketsConfiguration.class,
@@ -83,9 +87,7 @@ import static org.junit.Assert.*;
     CasCoreAuthenticationHandlersConfiguration.class,
     CasCoreAuthenticationPolicyConfiguration.class,
     CasCoreTicketCatalogConfiguration.class,
-    JpaTicketRegistryTicketCatalogConfiguration.class,
     CasPersonDirectoryConfiguration.class,
-    JpaTicketRegistryConfiguration.class,
     CasCoreWebConfiguration.class,
     CasWebApplicationServiceFactoryConfiguration.class})
 @ContextConfiguration(initializers = EnvironmentConversionServiceInitializer.class)
@@ -128,10 +130,7 @@ public class JpaLockingStrategyTests {
             }
         }).count();
         assertTrue("Lock count should be <= 1 but was " + lockCount, lockCount <= 1);
-
-        val releasers = new ArrayList<Releaser>(locks.size());
-
-        releasers.addAll(locks.stream().map(Releaser::new).collect(Collectors.toList()));
+        
         val releaseCount = executor.invokeAll(lockers).stream().filter(result -> {
             try {
                 return result.get();

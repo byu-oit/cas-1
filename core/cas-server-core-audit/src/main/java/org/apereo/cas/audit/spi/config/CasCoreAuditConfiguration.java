@@ -23,6 +23,7 @@ import org.apereo.cas.util.CollectionUtils;
 
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
+import org.apache.commons.lang3.RegExUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apereo.inspektr.audit.AuditTrailManagementAspect;
 import org.apereo.inspektr.audit.spi.AuditActionResolver;
@@ -85,8 +86,8 @@ public class CasCoreAuditConfiguration implements AuditTrailExecutionPlanConfigu
     public AuditTrailRecordResolutionPlan auditTrailRecordResolutionPlan(final List<AuditTrailRecordResolutionPlanConfigurer> configurers) {
         val plan = new DefaultAuditTrailRecordResolutionPlan();
         configurers.forEach(c -> {
-            val name = StringUtils.removePattern(c.getClass().getSimpleName(), "\\$.+");
-            LOGGER.debug("Registering audit trail manager [{}]", name);
+            val name = RegExUtils.removePattern(c.getClass().getSimpleName(), "\\$.+");
+            LOGGER.trace("Registering audit trail manager [{}]", name);
             c.configureAuditTrailRecordResolutionPlan(plan);
         });
         return plan;
@@ -98,8 +99,8 @@ public class CasCoreAuditConfiguration implements AuditTrailExecutionPlanConfigu
     public AuditTrailExecutionPlan auditTrailExecutionPlan(final List<AuditTrailExecutionPlanConfigurer> configurers) {
         val plan = new DefaultAuditTrailExecutionPlan();
         configurers.forEach(c -> {
-            val name = StringUtils.removePattern(c.getClass().getSimpleName(), "\\$.+");
-            LOGGER.debug("Registering audit trail manager [{}]", name);
+            val name = RegExUtils.removePattern(c.getClass().getSimpleName(), "\\$.+");
+            LOGGER.trace("Configuring audit trail execution plan via [{}]", name);
             c.configureAuditTrailExecutionPlan(plan);
         });
         return plan;
@@ -221,7 +222,7 @@ public class CasCoreAuditConfiguration implements AuditTrailExecutionPlanConfigu
     @Bean
     public AuditPrincipalIdProvider auditPrincipalIdProvider() {
         val resolvers = applicationContext.getBeansOfType(AuditPrincipalIdProvider.class, false, true);
-        val providers = new ArrayList<>(resolvers.values());
+        val providers = new ArrayList<AuditPrincipalIdProvider>(resolvers.values());
         AnnotationAwareOrderComparator.sort(providers);
         return new ChainingAuditPrincipalIdProvider(providers);
     }

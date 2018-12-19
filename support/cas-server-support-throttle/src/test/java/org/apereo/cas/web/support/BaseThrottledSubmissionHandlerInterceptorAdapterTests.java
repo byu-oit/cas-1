@@ -5,9 +5,10 @@ import org.apereo.cas.authentication.AuthenticationException;
 import org.apereo.cas.authentication.AuthenticationManager;
 import org.apereo.cas.authentication.CoreAuthenticationTestUtils;
 import org.apereo.cas.authentication.DefaultAuthenticationTransaction;
-import org.apereo.cas.authentication.UsernamePasswordCredential;
+import org.apereo.cas.authentication.credential.UsernamePasswordCredential;
 import org.apereo.cas.config.CasCoreUtilConfiguration;
 import org.apereo.cas.config.CasThrottlingConfiguration;
+import org.apereo.cas.util.junit.ConditionalIgnoreRule;
 
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -56,7 +57,7 @@ import static org.junit.Assert.*;
 @TestPropertySource(properties = {"spring.aop.proxy-target-class=true", "cas.authn.throttle.failure.rangeSeconds=1", "cas.authn.throttle.failure.threshold=2"})
 @EnableScheduling
 @Slf4j
-public class BaseThrottledSubmissionHandlerInterceptorAdapterTests {
+public abstract class BaseThrottledSubmissionHandlerInterceptorAdapterTests {
     @ClassRule
     public static final SpringClassRule SPRING_CLASS_RULE = new SpringClassRule();
 
@@ -65,13 +66,12 @@ public class BaseThrottledSubmissionHandlerInterceptorAdapterTests {
     @Rule
     public final SpringMethodRule springMethodRule = new SpringMethodRule();
 
+    @Rule
+    public final ConditionalIgnoreRule conditionalIgnoreRule = new ConditionalIgnoreRule();
+
     @Autowired
     @Qualifier("casAuthenticationManager")
     protected AuthenticationManager authenticationManager;
-
-    @Autowired
-    @Qualifier("authenticationThrottle")
-    protected ThrottledSubmissionHandlerInterceptor throttle;
 
     @Before
     public void initialize() {
@@ -95,13 +95,13 @@ public class BaseThrottledSubmissionHandlerInterceptorAdapterTests {
         failLoop(3, 200, HttpStatus.SC_LOCKED);
 
         // Ensure that slowing down relieves throttle
-        throttle.decrement();
+        getThrottle().decrement();
         Thread.sleep(1000);
         failLoop(3, 1000, HttpStatus.SC_UNAUTHORIZED);
     }
 
     @SneakyThrows
-    protected void failLoop(final int trials, final int period, final int expected) throws Exception {
+    protected void failLoop(final int trials, final int period, final int expected) {
         // Seed with something to compare against
         loginUnsuccessfully("mog", "1.2.3.4");
 
@@ -110,7 +110,9 @@ public class BaseThrottledSubmissionHandlerInterceptorAdapterTests {
                 LOGGER.debug("Waiting for [{}] ms", period);
                 Thread.sleep(period);
                 val status = loginUnsuccessfully("mog", "1.2.3.4");
-                assertEquals(expected, status.getStatus());
+                if (i == trials) {
+                    assertEquals(expected, status.getStatus());
+                }
             } catch (final Exception e) {
                 throw new AssertionError(e.getMessage(), e);
             }
@@ -129,12 +131,12 @@ public class BaseThrottledSubmissionHandlerInterceptorAdapterTests {
         request.setAttribute("flowRequestContext", context);
         ClientInfoHolder.setClientInfo(new ClientInfo(request));
         response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-        throttle.preHandle(request, response, null);
+        getThrottle().preHandle(request, response, null);
 
         try {
             authenticationManager.authenticate(DefaultAuthenticationTransaction.of(CoreAuthenticationTestUtils.getService(), badCredentials(username)));
         } catch (final AuthenticationException e) {
-            throttle.postHandle(request, response, null, null);
+            getThrottle().postHandle(request, response, null, null);
             return response;
         }
         throw new AssertionError("Expected AbstractAuthenticationException");
@@ -146,4 +148,6 @@ public class BaseThrottledSubmissionHandlerInterceptorAdapterTests {
         credentials.setPassword("badpassword");
         return credentials;
     }
+
+    public abstract ThrottledSubmissionHandlerInterceptor getThrottle();
 }

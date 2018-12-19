@@ -114,7 +114,7 @@ public class DefaultCasEventListenerTests {
         @Bean
         public CasEventRepository casEventRepository() {
             return new AbstractCasEventRepository() {
-                private Collection<CasEvent> events = new LinkedHashSet<>();
+                private final Collection<CasEvent> events = new LinkedHashSet<>();
 
                 @Override
                 public void save(final CasEvent event) {
@@ -122,7 +122,7 @@ public class DefaultCasEventListenerTests {
                 }
 
                 @Override
-                public Collection<? extends CasEvent> load() {
+                public Collection<CasEvent> load() {
                     return events;
                 }
             };

@@ -51,7 +51,7 @@ public class OAuth20PasswordGrantTypeTokenRequestValidatorTests {
                 RequestValidatorTestUtils.NON_SUPPORTING_CLIENT_ID,
                 RequestValidatorTestUtils.SHARED_SECRET,
                 CollectionUtils.wrapSet(getWrongGrantType()));
-        promiscuousService = RequestValidatorTestUtils.getPromiscousService(
+        promiscuousService = RequestValidatorTestUtils.getPromiscuousService(
                 RegisteredServiceTestUtils.CONST_TEST_URL3,
                 RequestValidatorTestUtils.PROMISCUOUS_CLIENT_ID,
                 RequestValidatorTestUtils.PROMISCUOUS_CLIENT_ID,
@@ -59,7 +59,6 @@ public class OAuth20PasswordGrantTypeTokenRequestValidatorTests {
 
         when(serviceManager.getAllServices()).thenReturn(CollectionUtils.wrapList(
                 supportingService, nonSupportingService, promiscuousService));
-
 
         this.validator = new OAuth20PasswordGrantTypeTokenRequestValidator(new RegisteredServiceAccessStrategyAuditableEnforcer(),
             serviceManager, new WebApplicationServiceFactory());

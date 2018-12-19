@@ -1,11 +1,12 @@
 package org.apereo.cas.pm.web.flow.actions;
 
-import org.apereo.cas.authentication.UsernamePasswordCredential;
+import org.apereo.cas.authentication.credential.UsernamePasswordCredential;
 import org.apereo.cas.pm.InvalidPasswordException;
 import org.apereo.cas.pm.PasswordChangeBean;
 import org.apereo.cas.pm.PasswordManagementService;
 import org.apereo.cas.pm.PasswordValidationService;
 import org.apereo.cas.pm.web.flow.PasswordManagementWebflowConfigurer;
+import org.apereo.cas.util.io.CommunicationsManager;
 import org.apereo.cas.web.support.WebUtils;
 
 import lombok.RequiredArgsConstructor;
@@ -40,6 +41,7 @@ public class PasswordChangeAction extends AbstractAction {
 
     private final PasswordManagementService passwordManagementService;
     private final PasswordValidationService passwordValidationService;
+    private final CommunicationsManager communicationsManager;
 
     @Override
     protected Event doExecute(final RequestContext requestContext) {

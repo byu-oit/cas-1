@@ -5,7 +5,7 @@ import org.apereo.cas.authentication.Credential;
 import org.apereo.cas.configuration.model.support.pm.PasswordManagementProperties;
 import org.apereo.cas.pm.BasePasswordManagementService;
 import org.apereo.cas.pm.PasswordChangeBean;
-import org.apereo.cas.util.ScriptingUtils;
+import org.apereo.cas.util.scripting.ScriptingUtils;
 
 import lombok.Getter;
 import lombok.NonNull;
@@ -36,7 +36,7 @@ public class GroovyResourcePasswordManagementService extends BasePasswordManagem
     }
 
     @Override
-    public boolean changeInternal(@NonNull final Credential credential, @NonNull final PasswordChangeBean bean) {
+    public boolean changeInternal(final @NonNull Credential credential, final @NonNull PasswordChangeBean bean) {
         return ScriptingUtils.executeGroovyScript(this.groovyResource, "change", new Object[]{credential, bean, LOGGER}, Boolean.class, true);
     }
 

@@ -52,10 +52,10 @@ public class OAuth20ProofKeyCodeExchangeAuthenticator extends OAuth20ClientIdCli
             LOGGER.error("Code verifier [{}] does not match the challenge [{}]", hash, token.getCodeChallenge());
             throw new CredentialsException("Code verification does not match the challenge assigned to: " + token.getId());
         }
-        LOGGER.debug("Validated code verifier using [{}] verification method [{}]", method);
+        LOGGER.debug("Validated code verifier using verification method [{}]", method);
     }
 
-    private String calculateCodeVerifierHash(final String method, final String codeVerifier) {
+    private static String calculateCodeVerifierHash(final String method, final String codeVerifier) {
         if ("plain".equalsIgnoreCase(method)) {
             return codeVerifier;
         }

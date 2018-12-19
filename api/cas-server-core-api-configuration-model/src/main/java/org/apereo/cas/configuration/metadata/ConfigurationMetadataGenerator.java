@@ -5,10 +5,10 @@ import org.apereo.cas.configuration.support.RequiredProperty;
 import org.apereo.cas.configuration.support.RequiresModule;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.core.PrettyPrinter;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.core.util.MinimalPrettyPrinter;
 import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.MapperFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.javaparser.JavaParser;
 import lombok.extern.slf4j.Slf4j;
@@ -17,6 +17,7 @@ import org.apache.commons.lang3.ClassUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.jooq.lambda.Unchecked;
 import org.springframework.boot.configurationmetadata.ConfigurationMetadataProperty;
+import org.springframework.boot.configurationmetadata.Deprecation;
 import org.springframework.boot.configurationmetadata.ValueHint;
 import org.springframework.util.ReflectionUtils;
 
@@ -92,6 +93,8 @@ public class ConfigurationMetadataGenerator {
         }
         final var mapper = new ObjectMapper().findAndRegisterModules();
         mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+        mapper.enable(MapperFeature.ACCEPT_CASE_INSENSITIVE_ENUMS);
+
         final TypeReference<Map<String, Set<ConfigurationMetadataProperty>>> values = new TypeReference<>() {
         };
         final Map<String, Set> jsonMap = mapper.readValue(jsonFile, values);
@@ -125,7 +128,7 @@ public class ConfigurationMetadataGenerator {
         jsonMap.put("hints", hints);
 
         mapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
-        final PrettyPrinter pp = new MinimalPrettyPrinter();
+        final var pp = new MinimalPrettyPrinter();
         final var writer = mapper.writer(pp);
         writer.writeValue(jsonFile, jsonMap);
     }
@@ -198,12 +201,17 @@ public class ConfigurationMetadataGenerator {
         });
     }
 
-    private Set<ConfigurationMetadataHint> processHints(final Collection<ConfigurationMetadataProperty> props,
-                                                        final Collection<ConfigurationMetadataProperty> groups) {
+    private static Set<ConfigurationMetadataHint> processHints(final Collection<ConfigurationMetadataProperty> props,
+                                                               final Collection<ConfigurationMetadataProperty> groups) {
 
         final Set<ConfigurationMetadataHint> hints = new LinkedHashSet<>();
 
-        for (val entry : props) {
+        val nonDeprecatedErrors = props.stream()
+                .filter(p -> p.getDeprecation() == null
+                        || !Deprecation.Level.ERROR.equals(p.getDeprecation().getLevel()))
+                .collect(Collectors.toList());
+
+        for (val entry : nonDeprecatedErrors) {
             try {
                 val propName = StringUtils.substringAfterLast(entry.getName(), ".");
                 val groupName = StringUtils.substringBeforeLast(entry.getName(), ".");
@@ -215,8 +223,7 @@ public class ConfigurationMetadataGenerator {
 
                 val matcher = PATTERN_GENERICS.matcher(grp.getType());
                 val className = matcher.find() ? matcher.group(1) : grp.getType();
-                final Class clazz = ClassUtils.getClass(className);
-
+                val clazz = ClassUtils.getClass(className);
 
                 val hint = new ConfigurationMetadataHint();
                 hint.setName(entry.getName());

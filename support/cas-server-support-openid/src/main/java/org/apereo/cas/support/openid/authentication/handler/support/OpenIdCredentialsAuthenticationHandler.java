@@ -2,9 +2,9 @@ package org.apereo.cas.support.openid.authentication.handler.support;
 
 import org.apereo.cas.authentication.AbstractAuthenticationHandler;
 import org.apereo.cas.authentication.AuthenticationHandlerExecutionResult;
-import org.apereo.cas.authentication.BasicCredentialMetaData;
 import org.apereo.cas.authentication.Credential;
 import org.apereo.cas.authentication.DefaultAuthenticationHandlerExecutionResult;
+import org.apereo.cas.authentication.metadata.BasicCredentialMetaData;
 import org.apereo.cas.authentication.principal.PrincipalFactory;
 import org.apereo.cas.services.ServicesManager;
 import org.apereo.cas.support.openid.authentication.principal.OpenIdCredential;
@@ -27,9 +27,11 @@ public class OpenIdCredentialsAuthenticationHandler extends AbstractAuthenticati
 
     private final TicketRegistry ticketRegistry;
 
-    public OpenIdCredentialsAuthenticationHandler(final String name, final ServicesManager servicesManager, final PrincipalFactory principalFactory,
-                                                  final TicketRegistry ticketRegistry) {
-        super(name, servicesManager, principalFactory, null);
+    public OpenIdCredentialsAuthenticationHandler(final String name, final ServicesManager servicesManager,
+                                                  final PrincipalFactory principalFactory,
+                                                  final TicketRegistry ticketRegistry,
+                                                  final Integer order) {
+        super(name, servicesManager, principalFactory, order);
         this.ticketRegistry = ticketRegistry;
     }
 
@@ -40,7 +42,7 @@ public class OpenIdCredentialsAuthenticationHandler extends AbstractAuthenticati
         val t = this.ticketRegistry.getTicket(c.getTicketGrantingTicketId(), TicketGrantingTicket.class);
 
         if (t == null || t.isExpired()) {
-            throw new FailedLoginException("TGT is null or expired.");
+            throw new FailedLoginException("Ticket-granting ticket is null or expired.");
         }
         val principal = t.getAuthentication().getPrincipal();
         if (!principal.getId().equals(c.getUsername())) {

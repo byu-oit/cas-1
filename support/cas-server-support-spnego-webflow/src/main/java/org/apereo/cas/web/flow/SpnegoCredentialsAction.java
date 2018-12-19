@@ -43,7 +43,7 @@ public class SpnegoCredentialsAction extends AbstractNonInteractiveCredentialsAc
      * <li>False : if an interactive view (eg: login page) should be send to user as SPNEGO failure fallback</li>
      * </ul>
      */
-    private boolean send401OnAuthenticationFailure;
+    private final boolean send401OnAuthenticationFailure;
 
     public SpnegoCredentialsAction(final CasDelegatingWebflowEventResolver initialAuthenticationAttemptWebflowEventResolver,
                                    final CasWebflowEventResolver serviceTicketRequestWebflowEventResolver,
@@ -83,8 +83,7 @@ public class SpnegoCredentialsAction extends AbstractNonInteractiveCredentialsAc
             return new SpnegoCredential(token);
         }
 
-        LOGGER.warn("SPNEGO Authorization header does not begin with the prefix [{}]",
-            SpnegoConstants.HEADER_AUTHORIZATION, messageBeginPrefix);
+        LOGGER.warn("SPNEGO Authorization header [{}] does not begin with the prefix [{}]", authorizationHeader, messageBeginPrefix);
         return null;
     }
 

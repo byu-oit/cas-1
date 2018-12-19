@@ -2,6 +2,8 @@ package org.apereo.cas.services;
 
 import org.apereo.cas.category.MongoDbCategory;
 import org.apereo.cas.config.MongoDbServiceRegistryConfiguration;
+import org.apereo.cas.util.junit.ConditionalIgnore;
+import org.apereo.cas.util.junit.RunningContinuousIntegrationCondition;
 
 import org.junit.experimental.categories.Category;
 import org.junit.runner.RunWith;
@@ -12,8 +14,8 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.cloud.autoconfigure.RefreshAutoConfiguration;
 import org.springframework.test.context.TestPropertySource;
 
-import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 
 /**
  * This is {@link MongoDbServiceRegistryCloudTests}.
@@ -27,6 +29,7 @@ import java.util.Collection;
 })
 @RunWith(Parameterized.class)
 @Category(MongoDbCategory.class)
+@ConditionalIgnore(condition = RunningContinuousIntegrationCondition.class, port = 27017)
 @TestPropertySource(properties = {
     "cas.serviceRegistry.mongo.databaseName=service-registry",
     "cas.serviceRegistry.mongo.host=localhost",
@@ -48,7 +51,7 @@ public class MongoDbServiceRegistryCloudTests extends AbstractServiceRegistryTes
 
     @Parameterized.Parameters
     public static Collection<Object> getTestParameters() {
-        return Arrays.asList(RegexRegisteredService.class);
+        return Collections.singletonList(RegexRegisteredService.class);
     }
 
     @Override

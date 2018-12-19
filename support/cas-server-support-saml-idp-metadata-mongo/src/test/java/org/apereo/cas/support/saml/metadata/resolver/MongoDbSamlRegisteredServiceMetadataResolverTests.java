@@ -3,6 +3,8 @@ package org.apereo.cas.support.saml.metadata.resolver;
 import org.apereo.cas.support.saml.BaseMongoDbSamlMetadataTests;
 import org.apereo.cas.support.saml.services.SamlRegisteredService;
 import org.apereo.cas.support.saml.services.idp.metadata.SamlMetadataDocument;
+import org.apereo.cas.util.junit.ConditionalIgnore;
+import org.apereo.cas.util.junit.RunningContinuousIntegrationCondition;
 
 import lombok.val;
 import org.apache.commons.io.IOUtils;
@@ -33,10 +35,10 @@ import static org.junit.Assert.*;
     "cas.authn.samlIdp.metadata.mongo.idpMetadataCollection=saml-idp-metadata-resolver",
     "cas.authn.samlIdp.metadata.location=file:/tmp"
     })
+@ConditionalIgnore(condition = RunningContinuousIntegrationCondition.class, port = 27017)
 public class MongoDbSamlRegisteredServiceMetadataResolverTests extends BaseMongoDbSamlMetadataTests {
     @Test
     public void verifyResolver() throws IOException {
-        val mongo = casProperties.getAuthn().getSamlIdp().getMetadata().getMongo();
         val res = new ClassPathResource("sp-metadata.xml");
         val md = new SamlMetadataDocument();
         md.setName("SP");

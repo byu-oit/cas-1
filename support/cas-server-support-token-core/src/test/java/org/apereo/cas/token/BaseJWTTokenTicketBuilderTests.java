@@ -44,16 +44,16 @@ import java.util.List;
  */
 @SpringBootTest(classes = {
     RefreshAutoConfiguration.class,
+    TokenCoreConfiguration.class,
+    BaseJWTTokenTicketBuilderTests.TokenTicketBuilderTestConfiguration.class,
     CasCoreTicketsConfiguration.class,
     CasCoreServicesConfiguration.class,
     CasCoreUtilConfiguration.class,
     CasRegisteredServicesTestConfiguration.class,
-    BaseJWTTokenTicketBuilderTests.TokenTicketBuilderTestConfiguration.class,
     CasCoreTicketCatalogConfiguration.class,
     CasCoreTicketIdGeneratorsConfiguration.class,
     CasCoreHttpConfiguration.class,
-    CasDefaultServiceTicketIdGeneratorsConfiguration.class,
-    TokenCoreConfiguration.class
+    CasDefaultServiceTicketIdGeneratorsConfiguration.class
 })
 public abstract class BaseJWTTokenTicketBuilderTests {
     @ClassRule
@@ -100,7 +100,7 @@ public abstract class BaseJWTTokenTicketBuilderTests {
 
         @Bean
         public AbstractUrlBasedTicketValidator casClientTicketValidator() {
-            final AbstractUrlBasedTicketValidator validator = new AbstractUrlBasedTicketValidator("https://cas.example.org") {
+            return new AbstractUrlBasedTicketValidator("https://cas.example.org") {
                 @Override
                 protected String getUrlSuffix() {
                     return "/cas";
@@ -116,7 +116,6 @@ public abstract class BaseJWTTokenTicketBuilderTests {
                     return "theresponse";
                 }
             };
-            return validator;
         }
     }
 }

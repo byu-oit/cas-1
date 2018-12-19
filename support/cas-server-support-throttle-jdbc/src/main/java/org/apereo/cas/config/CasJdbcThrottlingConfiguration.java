@@ -3,6 +3,7 @@ package org.apereo.cas.config;
 import org.apereo.cas.audit.AuditTrailExecutionPlan;
 import org.apereo.cas.configuration.CasConfigurationProperties;
 import org.apereo.cas.configuration.support.JpaBeans;
+import org.apereo.cas.throttle.ThrottledRequestExecutor;
 import org.apereo.cas.throttle.ThrottledRequestResponseHandler;
 import org.apereo.cas.web.support.JdbcThrottledSubmissionHandlerInterceptorAdapter;
 import org.apereo.cas.web.support.ThrottledSubmissionHandlerInterceptor;
@@ -11,6 +12,7 @@ import lombok.val;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.boot.autoconfigure.AutoConfigureAfter;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.cloud.context.config.annotation.RefreshScope;
 import org.springframework.context.annotation.Bean;
@@ -26,6 +28,7 @@ import javax.sql.DataSource;
  */
 @Configuration("casJdbcThrottlingConfiguration")
 @EnableConfigurationProperties(CasConfigurationProperties.class)
+@AutoConfigureAfter(CasThrottlingConfiguration.class)
 public class CasJdbcThrottlingConfiguration {
 
     @Autowired
@@ -37,13 +40,17 @@ public class CasJdbcThrottlingConfiguration {
 
     @Autowired
     @Qualifier("throttledRequestResponseHandler")
-    private ThrottledRequestResponseHandler throttledRequestResponseHandler;
+    private ObjectProvider<ThrottledRequestResponseHandler> throttledRequestResponseHandler;
 
+    @Autowired
+    @Qualifier("throttledRequestExecutor")
+    private ObjectProvider<ThrottledRequestExecutor> throttledRequestExecutor;
+
+    @RefreshScope
     @Bean
-    public DataSource inspektrAuditTrailDataSource() {
+    public DataSource inspektrThrottleDataSource() {
         return JpaBeans.newDataSource(casProperties.getAuthn().getThrottle().getJdbc());
     }
-
 
     @Bean
     @RefreshScope
@@ -55,10 +62,11 @@ public class CasJdbcThrottlingConfiguration {
             failure.getRangeSeconds(),
             throttle.getUsernameParameter(),
             auditTrailManager.getIfAvailable(),
-            inspektrAuditTrailDataSource(),
-            throttle.getAppcode(),
+            inspektrThrottleDataSource(),
+            throttle.getAppCode(),
             throttle.getJdbc().getAuditQuery(),
             failure.getCode(),
-            throttledRequestResponseHandler);
+            throttledRequestResponseHandler.getIfAvailable(),
+            throttledRequestExecutor.getIfAvailable());
     }
 }

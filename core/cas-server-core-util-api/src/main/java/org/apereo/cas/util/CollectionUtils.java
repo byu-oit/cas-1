@@ -73,26 +73,26 @@ public class CollectionUtils {
      * @return The collection instance containing the object provided
      */
     public static Set<Object> toCollection(final Object obj) {
-        val c = new LinkedHashSet<>();
+        val c = new LinkedHashSet<Object>();
         if (obj == null) {
             LOGGER.debug("Converting null obj to empty collection");
         } else if (obj instanceof Collection) {
             c.addAll((Collection<Object>) obj);
-            LOGGER.trace("Converting multi-valued attribute [{}]", obj);
+            LOGGER.trace("Converting multi-valued element [{}]", obj);
         } else if (obj instanceof Map) {
             val map = (Map) obj;
             val set = (Set<Map.Entry>) map.entrySet();
             c.addAll(set.stream().map(e -> Pair.of(e.getKey(), e.getValue())).collect(Collectors.toSet()));
         } else if (obj.getClass().isArray()) {
-            if ((byte[].class).isInstance(obj)) {
+            if (byte[].class.isInstance(obj)) {
                 c.add(obj);
             } else {
                 c.addAll(Arrays.stream((Object[]) obj).collect(Collectors.toSet()));
             }
-            LOGGER.trace("Converting array attribute [{}]", obj);
+            LOGGER.trace("Converting array element [{}]", obj);
         } else {
             c.add(obj);
-            LOGGER.trace("Converting attribute [{}]", obj);
+            LOGGER.trace("Converting element [{}]", obj);
         }
         return c;
     }
@@ -108,7 +108,7 @@ public class CollectionUtils {
     public static <K, V> Map<K, V> wrap(final Multimap<K, V> source) {
         if (source != null && !source.isEmpty()) {
             val inner = source.asMap();
-            val map = new HashMap<>();
+            val map = new HashMap<Object, Object>();
             inner.forEach((k, v) -> map.put(k, wrap(v)));
             return (Map) map;
         }
@@ -398,6 +398,17 @@ public class CollectionUtils {
         val list = new HashSet<T>();
         addToCollection(list, source);
         return list;
+    }
+
+    /**
+     * Wrap hash set.
+     *
+     * @param <T>    the type parameter
+     * @param source the source
+     * @return the set
+     */
+    public static <T> HashSet<T> wrapHashSet(final Collection<T> source) {
+        return new HashSet<T>(source);
     }
 
     /**

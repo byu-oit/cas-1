@@ -1,7 +1,7 @@
 package org.apereo.cas.rest.factory;
 
 import org.apereo.cas.authentication.Credential;
-import org.apereo.cas.authentication.UsernamePasswordCredential;
+import org.apereo.cas.authentication.credential.UsernamePasswordCredential;
 import org.apereo.cas.util.CollectionUtils;
 
 import lombok.Getter;
@@ -30,6 +30,10 @@ public class UsernamePasswordRestHttpRequestCredentialFactory implements RestHtt
 
     @Override
     public List<Credential> fromRequest(final HttpServletRequest request, final MultiValueMap<String, String> requestBody) {
+        if (requestBody == null || requestBody.isEmpty()) {
+            LOGGER.debug("Skipping {} because the requestBody is null or empty", getClass().getSimpleName());
+            return new ArrayList<>(0);
+        }
         val username = requestBody.getFirst(USERNAME);
         val password = requestBody.getFirst(PASSWORD);
         if (username == null || password == null) {

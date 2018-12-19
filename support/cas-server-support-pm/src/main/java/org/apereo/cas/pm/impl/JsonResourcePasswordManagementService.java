@@ -2,7 +2,7 @@ package org.apereo.cas.pm.impl;
 
 import org.apereo.cas.CipherExecutor;
 import org.apereo.cas.authentication.Credential;
-import org.apereo.cas.authentication.UsernamePasswordCredential;
+import org.apereo.cas.authentication.credential.UsernamePasswordCredential;
 import org.apereo.cas.configuration.model.support.pm.PasswordManagementProperties;
 import org.apereo.cas.pm.BasePasswordManagementService;
 import org.apereo.cas.pm.PasswordChangeBean;
@@ -59,7 +59,7 @@ public class JsonResourcePasswordManagementService extends BasePasswordManagemen
     }
 
     @Override
-    public boolean changeInternal(@NonNull final Credential credential, @NonNull final PasswordChangeBean bean) {
+    public boolean changeInternal(final @NonNull Credential credential, final @NonNull PasswordChangeBean bean) {
         val c = (UsernamePasswordCredential) credential;
         if (StringUtils.isBlank(bean.getPassword())) {
             LOGGER.error("Password cannot be blank");
@@ -98,7 +98,7 @@ public class JsonResourcePasswordManagementService extends BasePasswordManagemen
             .stream()
             .filter(entry -> entry.getValue().getEmail().equalsIgnoreCase(email))
             .findFirst();
-        return result.isPresent() ? result.get().getKey() : null;
+        return result.map(Map.Entry::getKey).orElse(null);
     }
 
     @Override

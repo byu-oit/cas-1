@@ -1,9 +1,10 @@
 package org.apereo.cas.authentication.policy;
 
 import org.apereo.cas.authentication.Authentication;
+import org.apereo.cas.authentication.AuthenticationHandler;
 import org.apereo.cas.authentication.AuthenticationPolicy;
 import org.apereo.cas.util.CollectionUtils;
-import org.apereo.cas.util.ScriptingUtils;
+import org.apereo.cas.util.scripting.ScriptingUtils;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -12,6 +13,7 @@ import org.springframework.core.io.ResourceLoader;
 
 import java.security.GeneralSecurityException;
 import java.util.Optional;
+import java.util.Set;
 import java.util.regex.Matcher;
 
 /**
@@ -27,7 +29,7 @@ public class GroovyScriptAuthenticationPolicy implements AuthenticationPolicy {
     private final String script;
 
     @Override
-    public boolean isSatisfiedBy(final Authentication auth) throws Exception {
+    public boolean isSatisfiedBy(final Authentication auth, final Set<AuthenticationHandler> authenticationHandlers) throws Exception {
         val matcherInline = ScriptingUtils.getMatcherForInlineGroovyScript(script);
         val ex = getScriptExecutionResult(auth, matcherInline);
 

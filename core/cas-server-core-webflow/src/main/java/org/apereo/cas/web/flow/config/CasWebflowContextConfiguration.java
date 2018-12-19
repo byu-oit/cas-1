@@ -84,7 +84,7 @@ public class CasWebflowContextConfiguration {
 
     @Autowired
     @Qualifier("webflowCipherExecutor")
-    private CipherExecutor webflowCipherExecutor;
+    private ObjectProvider<CipherExecutor> webflowCipherExecutor;
 
     @Bean
     public ExpressionParser expressionParser() {
@@ -166,7 +166,7 @@ public class CasWebflowContextConfiguration {
     @Lazy
     @Bean
     public Object[] loginFlowHandlerMappingInterceptors() {
-        val interceptors = new ArrayList<>();
+        val interceptors = new ArrayList<Object>();
         interceptors.add(localeChangeInterceptor());
         val plan = authenticationThrottlingExecutionPlan.getIfAvailable();
         if (plan != null) {
@@ -204,7 +204,7 @@ public class CasWebflowContextConfiguration {
     @Bean
     public FlowExecutor logoutFlowExecutor() {
         val factory = new WebflowExecutorFactory(casProperties.getWebflow(),
-            logoutFlowRegistry(), this.webflowCipherExecutor, new FlowExecutionListener[0]);
+            logoutFlowRegistry(), this.webflowCipherExecutor.getIfAvailable(), new FlowExecutionListener[0]);
         return factory.build();
     }
 
@@ -212,7 +212,7 @@ public class CasWebflowContextConfiguration {
     @Bean
     public FlowExecutor loginFlowExecutor() {
         val factory = new WebflowExecutorFactory(casProperties.getWebflow(),
-            loginFlowRegistry(), this.webflowCipherExecutor,
+            loginFlowRegistry(), this.webflowCipherExecutor.getIfAvailable(),
             new FlowExecutionListener[0]);
 
         return factory.build();

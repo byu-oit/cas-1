@@ -3,13 +3,11 @@ package org.apereo.cas.support.oauth.web;
 import org.apereo.cas.ComponentSerializationPlan;
 import org.apereo.cas.ComponentSerializationPlanConfigurator;
 import org.apereo.cas.authentication.Authentication;
-import org.apereo.cas.authentication.AuthenticationHandlerExecutionResult;
-import org.apereo.cas.authentication.BasicCredentialMetaData;
-import org.apereo.cas.authentication.BasicIdentifiableCredential;
 import org.apereo.cas.authentication.CoreAuthenticationTestUtils;
-import org.apereo.cas.authentication.CredentialMetaData;
 import org.apereo.cas.authentication.DefaultAuthenticationBuilder;
 import org.apereo.cas.authentication.DefaultAuthenticationHandlerExecutionResult;
+import org.apereo.cas.authentication.credential.BasicIdentifiableCredential;
+import org.apereo.cas.authentication.metadata.BasicCredentialMetaData;
 import org.apereo.cas.authentication.principal.Principal;
 import org.apereo.cas.authentication.principal.WebApplicationServiceFactory;
 import org.apereo.cas.config.CasCoreAuthenticationConfiguration;
@@ -60,6 +58,7 @@ import org.apereo.cas.ticket.registry.TicketRegistry;
 import org.apereo.cas.util.CollectionUtils;
 import org.apereo.cas.util.EncodingUtils;
 import org.apereo.cas.util.SchedulingUtils;
+import org.apereo.cas.util.junit.ConditionalIgnoreRule;
 import org.apereo.cas.web.config.CasCookieConfiguration;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -174,6 +173,9 @@ public abstract class AbstractOAuth20Tests {
     public static final int DELTA = 2;
 
     @Rule
+    public final ConditionalIgnoreRule conditionalIgnoreRule = new ConditionalIgnoreRule();
+
+    @Rule
     public final SpringMethodRule springMethodRule = new SpringMethodRule();
 
     @Autowired
@@ -234,6 +236,10 @@ public abstract class AbstractOAuth20Tests {
         return addRegisteredService(false, grantTypes);
     }
 
+    protected OAuthRegisteredService addRegisteredService(final Set<OAuth20GrantTypes> grantTypes, final String clientSecret) {
+        return addRegisteredService(false, grantTypes, clientSecret);
+    }
+
     protected OAuthRegisteredService addRegisteredService() {
         return addRegisteredService(false, new HashSet<>());
     }
@@ -241,21 +247,22 @@ public abstract class AbstractOAuth20Tests {
 
     protected OAuthRegisteredService addRegisteredService(final boolean generateRefreshToken,
                                                           final Set<OAuth20GrantTypes> grantTypes) {
-        val registeredService = getRegisteredService(REDIRECT_URI, CLIENT_SECRET, grantTypes);
+        return addRegisteredService(generateRefreshToken, grantTypes, CLIENT_SECRET);
+    }
+
+    protected OAuthRegisteredService addRegisteredService(final boolean generateRefreshToken,
+                                                          final Set<OAuth20GrantTypes> grantTypes, final String clientSecret) {
+        val registeredService = getRegisteredService(REDIRECT_URI, clientSecret, grantTypes);
         registeredService.setGenerateRefreshToken(generateRefreshToken);
         servicesManager.save(registeredService);
         return registeredService;
     }
 
 
-    protected OAuthRegisteredService addRegisteredService(final boolean generateRefreshToken) {
-        return addRegisteredService(generateRefreshToken, new HashSet<>());
-    }
-
     protected static Authentication getAuthentication(final Principal principal) {
-        final CredentialMetaData metadata = new BasicCredentialMetaData(
+        val metadata = new BasicCredentialMetaData(
             new BasicIdentifiableCredential(principal.getId()));
-        final AuthenticationHandlerExecutionResult handlerResult = new DefaultAuthenticationHandlerExecutionResult(principal.getClass().getCanonicalName(),
+        val handlerResult = new DefaultAuthenticationHandlerExecutionResult(principal.getClass().getCanonicalName(),
             metadata, principal, new ArrayList<>());
 
         return DefaultAuthenticationBuilder.newInstance()
@@ -391,7 +398,7 @@ public abstract class AbstractOAuth20Tests {
         }
 
         @Override
-        public void afterPropertiesSet() throws Exception {
+        public void afterPropertiesSet() {
             init();
         }
 

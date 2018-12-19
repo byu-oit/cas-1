@@ -15,6 +15,7 @@ import org.apereo.cas.config.CasCoreTicketCatalogConfiguration;
 import org.apereo.cas.config.CasCoreTicketsConfiguration;
 import org.apereo.cas.config.CasCoreUtilConfiguration;
 import org.apereo.cas.config.CasCoreWebConfiguration;
+import org.apereo.cas.config.CasHazelcastConfiguration;
 import org.apereo.cas.config.CasPersonDirectoryConfiguration;
 import org.apereo.cas.config.HazelcastTicketRegistryConfiguration;
 import org.apereo.cas.config.HazelcastTicketRegistryTicketCatalogConfiguration;
@@ -38,6 +39,7 @@ import org.springframework.test.context.junit4.rules.SpringMethodRule;
 
 import java.util.Map;
 
+import static org.hamcrest.Matchers.isOneOf;
 import static org.junit.Assert.*;
 
 /**
@@ -47,10 +49,13 @@ import static org.junit.Assert.*;
  * @since 5.3.0
  */
 @SpringBootTest(classes = {
+    RefreshAutoConfiguration.class,
+    CasHazelcastConfiguration.class,
     HazelcastTicketRegistryConfiguration.class,
+    HazelcastTicketRegistryTicketCatalogConfiguration.class,
+    HazelcastMonitorConfiguration.class,
     CasCoreTicketsConfiguration.class,
     CasCoreTicketCatalogConfiguration.class,
-    HazelcastTicketRegistryTicketCatalogConfiguration.class,
     CasCoreUtilConfiguration.class,
     CasPersonDirectoryConfiguration.class,
     CasCoreLogoutConfiguration.class,
@@ -62,14 +67,12 @@ import static org.junit.Assert.*;
     CasCoreAuthenticationSupportConfiguration.class,
     CasCoreAuthenticationHandlersConfiguration.class,
     CasCoreHttpConfiguration.class,
-    RefreshAutoConfiguration.class,
     CasCoreConfiguration.class,
     CasCoreAuthenticationServiceSelectionStrategyConfiguration.class,
     CasCoreServicesConfiguration.class,
     CasCoreLogoutConfiguration.class,
     CasCoreWebConfiguration.class,
-    CasWebApplicationServiceFactoryConfiguration.class,
-    HazelcastMonitorConfiguration.class
+    CasWebApplicationServiceFactoryConfiguration.class
 })
 @TestPropertySource(properties = {"cas.ticket.registry.hazelcast.cluster.instanceName=testlocalmonitor"})
 public class HazelcastHealthIndicatorTests {
@@ -86,7 +89,8 @@ public class HazelcastHealthIndicatorTests {
     @Test
     public void verifyMonitor() {
         val health = hazelcastHealthIndicator.health();
-        assertEquals(Status.UP, health.getStatus());
+        assertThat(health.getStatus(), isOneOf(Status.UP, Status.OUT_OF_SERVICE));
+
         val details = health.getDetails();
         details.values().stream()
             .map(Map.class::cast)

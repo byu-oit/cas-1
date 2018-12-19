@@ -5,10 +5,11 @@ import org.apereo.cas.configuration.CasConfigurationProperties;
 import org.apereo.cas.configuration.model.core.monitor.ActuatorEndpointProperties;
 import org.apereo.cas.configuration.model.core.monitor.MonitorProperties;
 import org.apereo.cas.configuration.support.JpaBeans;
-import org.apereo.cas.web.security.authentication.LdapAuthenticationProvider;
+import org.apereo.cas.web.security.authentication.MonitorEndpointLdapAuthenticationProvider;
 
 import lombok.RequiredArgsConstructor;
 import lombok.val;
+import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.jooq.lambda.Unchecked;
 import org.springframework.boot.actuate.autoconfigure.security.servlet.EndpointRequest;
@@ -30,13 +31,18 @@ import java.util.stream.Collectors;
  */
 @RequiredArgsConstructor
 public class CasWebSecurityConfigurerAdapter extends WebSecurityConfigurerAdapter {
+    /**
+     * Endpoint url used for admin-level form-login of endpoints.
+     */
+    public static final String ENDPOINT_URL_ADMIN_FORM_LOGIN = "/adminlogin";
+
     private final CasConfigurationProperties casProperties;
     private final SecurityProperties securityProperties;
 
     @Override
     protected void configure(final HttpSecurity http) throws Exception {
-        http.csrf()
-            .disable()
+        http.csrf().disable()
+            .headers().disable()
             .logout()
             .disable()
             .requiresChannel()
@@ -44,7 +50,7 @@ public class CasWebSecurityConfigurerAdapter extends WebSecurityConfigurerAdapte
             .requiresSecure();
 
         val requests = http.authorizeRequests();
-        configureEndpointAccessToDenyUndefined(requests);
+        configureEndpointAccessToDenyUndefined(http, requests);
         configureEndpointAccessForStaticResources(requests);
 
         val endpoints = casProperties.getMonitor().getEndpoints().getEndpoint();
@@ -99,7 +105,7 @@ public class CasWebSecurityConfigurerAdapter extends WebSecurityConfigurerAdapte
      */
     protected void configureLdapAuthenticationProvider(final AuthenticationManagerBuilder auth, final MonitorProperties.Endpoints.LdapSecurity ldap) {
         if (isLdapAuthorizationActive()) {
-            val p = new LdapAuthenticationProvider(ldap, securityProperties);
+            val p = new MonitorEndpointLdapAuthenticationProvider(ldap, securityProperties);
             auth.authenticationProvider(p);
         }
     }
@@ -125,14 +131,17 @@ public class CasWebSecurityConfigurerAdapter extends WebSecurityConfigurerAdapte
     /**
      * Configure endpoint access to deny undefined.
      *
+     * @param http     the http
      * @param requests the requests
      */
-    protected void configureEndpointAccessToDenyUndefined(final ExpressionUrlAuthorizationConfigurer<HttpSecurity>.ExpressionInterceptUrlRegistry requests) {
+    protected void configureEndpointAccessToDenyUndefined(final HttpSecurity http,
+                                                          final ExpressionUrlAuthorizationConfigurer<HttpSecurity>.ExpressionInterceptUrlRegistry requests) {
         val endpoints = casProperties.getMonitor().getEndpoints().getEndpoint().keySet();
-        val configuredEndpoints = endpoints.toArray(new String[]{});
-        requests
-            .requestMatchers(EndpointRequest.toAnyEndpoint().excluding(configuredEndpoints).excludingLinks())
-            .denyAll();
+        val configuredEndpoints = endpoints.toArray(ArrayUtils.EMPTY_STRING_ARRAY);
+
+        val endpointDefaults = casProperties.getMonitor().getEndpoints().getDefaultEndpointProperties();
+        endpointDefaults.getAccess().forEach(Unchecked.consumer(access ->
+            configureEndpointAccess(http, requests, access, endpointDefaults, EndpointRequest.toAnyEndpoint().excluding(configuredEndpoints).excludingLinks())));
     }
 
     /**
@@ -160,7 +169,7 @@ public class CasWebSecurityConfigurerAdapter extends WebSecurityConfigurerAdapte
     protected void configureEndpointAccessByFormLogin(final ExpressionUrlAuthorizationConfigurer<HttpSecurity>.ExpressionInterceptUrlRegistry requests) throws Exception {
         requests.and()
             .formLogin()
-            .loginPage("/adminlogin")
+            .loginPage(ENDPOINT_URL_ADMIN_FORM_LOGIN)
             .permitAll();
     }
 
@@ -220,6 +229,7 @@ public class CasWebSecurityConfigurerAdapter extends WebSecurityConfigurerAdapte
 
     private void configureEndpointAccessAnonymously(final ExpressionUrlAuthorizationConfigurer<HttpSecurity>.ExpressionInterceptUrlRegistry requests,
                                                     final EndpointRequest.EndpointRequestMatcher endpoint) {
+
         requests.requestMatchers(endpoint).anonymous();
     }
 
@@ -230,6 +240,7 @@ public class CasWebSecurityConfigurerAdapter extends WebSecurityConfigurerAdapte
             .stream()
             .map(address -> "hasIpAddress('" + address + "')")
             .collect(Collectors.joining(" or "));
+
         requests
             .requestMatchers(endpoint)
             .access(addresses);
@@ -247,7 +258,7 @@ public class CasWebSecurityConfigurerAdapter extends WebSecurityConfigurerAdapte
                                                final ActuatorEndpointProperties properties,
                                                final EndpointRequest.EndpointRequestMatcher endpoint) throws Exception {
         requests.requestMatchers(endpoint)
-            .hasAnyRole(properties.getRequiredRoles().toArray(new String[]{}))
+            .hasAnyRole(properties.getRequiredRoles().toArray(ArrayUtils.EMPTY_STRING_ARRAY))
             .and()
             .httpBasic();
     }
@@ -256,7 +267,7 @@ public class CasWebSecurityConfigurerAdapter extends WebSecurityConfigurerAdapte
                                                     final ActuatorEndpointProperties properties,
                                                     final EndpointRequest.EndpointRequestMatcher endpoint) throws Exception {
         requests.requestMatchers(endpoint)
-            .hasAnyAuthority(properties.getRequiredAuthorities().toArray(new String[]{}))
+            .hasAnyAuthority(properties.getRequiredAuthorities().toArray(ArrayUtils.EMPTY_STRING_ARRAY))
             .and()
             .httpBasic();
     }
